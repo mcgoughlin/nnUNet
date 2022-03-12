@@ -49,7 +49,7 @@ def crop_to_bbox(image, bbox):
 
 
 def get_case_identifier(case):
-    case_identifier = case[0].split("/")[-1].split(".nii.gz")[0][:-5]
+    case_identifier = case[0].split("/")[-1].split(".nii.gz")[0]
     return case_identifier
 
 
