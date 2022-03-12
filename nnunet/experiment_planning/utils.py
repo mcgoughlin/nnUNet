@@ -91,7 +91,7 @@ def create_lists_from_splitted_dataset(base_folder_splitted):
         cur_pat = []
         for mod in range(num_modalities):
             cur_pat.append(join(base_folder_splitted, "imagesTr", tr['image'].split("/")[-1][:-7] +
-                                "_%04.0d.nii.gz" % mod))
+                                ".nii.gz" % mod))
         cur_pat.append(join(base_folder_splitted, "labelsTr", tr['label'].split("/")[-1]))
         lists.append(cur_pat)
     return lists, {int(i): d['modality'][str(i)] for i in d['modality'].keys()}

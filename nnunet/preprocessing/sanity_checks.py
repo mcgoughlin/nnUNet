@@ -139,7 +139,7 @@ def verify_dataset_integrity(folder):
         has_nan = has_nan | nans_in_seg
         if nans_in_seg:
             print("There are NAN values in segmentation %s" % expected_label_file)
-
+            
         images_itk = [sitk.ReadImage(i) for i in expected_image_files]
         for i, img in enumerate(images_itk):
             nans_in_image = np.any(np.isnan(sitk.GetArrayFromImage(img)))
