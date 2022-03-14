@@ -126,7 +126,7 @@ def resample_data_or_seg(data, new_shape, is_seg, axis=None, order=3, do_separat
     else:
         resize_fn = resize
         kwargs = {'mode': 'edge', 'anti_aliasing': False}
-    dtype_data = data.dtype
+    dtype_data = np.float16
     shape = np.array(data[0].shape)
     new_shape = np.array(new_shape)
     if np.any(shape != new_shape):
