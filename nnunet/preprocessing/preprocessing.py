@@ -315,19 +315,19 @@ class GenericPreprocessor(object):
 
         data, seg, properties = self.resample_and_normalize(data, target_spacing, properties, seg,
                                                             force_separate_z=force_separate_z)
-        return data.astype(np.float32), seg, properties
+        return data.astype(np.float16), seg, properties
 
     def _run_internal(self, target_spacing, case_identifier, output_folder_stage, cropped_output_dir, force_separate_z,
                       all_classes):
         data, seg, properties = self.load_cropped(cropped_output_dir, case_identifier)
 
-        data = data.transpose((0, *[i + 1 for i in self.transpose_forward]))
-        seg = seg.transpose((0, *[i + 1 for i in self.transpose_forward]))
+        data = data.astype(np.float16).transpose((0, *[i + 1 for i in self.transpose_forward]))
+        seg = seg.astype(np.float16).transpose((0, *[i + 1 for i in self.transpose_forward]))
 
         data, seg, properties = self.resample_and_normalize(data, target_spacing,
                                                             properties, seg, force_separate_z)
 
-        all_data = np.vstack((data, seg)).astype(np.float32)
+        all_data = np.vstack((data, seg)).astype(np.float16)
 
         # we need to find out where the classes are and sample some random locations
         # let's do 10.000 samples per class
@@ -351,7 +351,7 @@ class GenericPreprocessor(object):
 
         print("saving: ", os.path.join(output_folder_stage, "%s.npz" % case_identifier))
         np.savez_compressed(os.path.join(output_folder_stage, "%s.npz" % case_identifier),
-                            data=all_data.astype(np.float32))
+                            data=all_data.astype(np.float16))
         with open(os.path.join(output_folder_stage, "%s.pkl" % case_identifier), 'wb') as f:
             pickle.dump(properties, f)
 
