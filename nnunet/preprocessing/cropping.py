@@ -75,10 +75,10 @@ def load_case_from_list_of_files(data_files, seg_file=None):
     data_npy = np.vstack([sitk.GetArrayFromImage(d)[None] for d in data_itk])
     if seg_file is not None:
         seg_itk = sitk.ReadImage(seg_file)
-        seg_npy = sitk.GetArrayFromImage(seg_itk)[None].astype(np.float32)
+        seg_npy = sitk.GetArrayFromImage(seg_itk)[None].astype(np.float16)
     else:
         seg_npy = None
-    return data_npy.astype(np.float32), seg_npy, properties
+    return data_npy.astype(np.float16), seg_npy, properties
 
 
 def crop_to_nonzero(data, seg=None, nonzero_label=-1):
@@ -163,7 +163,7 @@ class ImageCropper(object):
 
                 data, seg, properties = self.crop_from_list_of_files(case[:-1], case[-1])
 
-                all_data = np.vstack((data, seg))
+                all_data = np.vstack((data, seg)).astype(np.float16)
                 np.savez_compressed(os.path.join(self.output_folder, "%s.npz" % case_identifier), data=all_data)
                 with open(os.path.join(self.output_folder, "%s.pkl" % case_identifier), 'wb') as f:
                     pickle.dump(properties, f)
