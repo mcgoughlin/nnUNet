@@ -94,9 +94,9 @@ class NetworkTrainer(object):
         # too high the training will take forever
         self.train_loss_MA_alpha = 0.93  # alpha * old + (1-alpha) * new
         self.train_loss_MA_eps = 5e-4  # new MA must be at least this much better (smaller)
-        self.max_num_epochs = 350
-        self.num_batches_per_epoch = 250
-        self.num_val_batches_per_epoch = 50
+        self.max_num_epochs = 100
+        self.num_batches_per_epoch = 25
+        self.num_val_batches_per_epoch = 5
         self.also_val_in_tr_mode = False
         self.lr_threshold = 1e-6  # the network will not terminate training if the lr is still above this threshold
 
