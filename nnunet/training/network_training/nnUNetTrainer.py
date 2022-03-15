@@ -22,6 +22,7 @@ from typing import Tuple, List
 import matplotlib
 import numpy as np
 import torch
+torch.cuda.empty_cache()
 from batchgenerators.utilities.file_and_folder_operations import *
 from torch import nn
 from torch.optim import lr_scheduler
