@@ -14,7 +14,7 @@
 
 
 from copy import deepcopy
-
+import os
 import numpy as np
 from batchgenerators.utilities.file_and_folder_operations import *
 import argparse
@@ -36,7 +36,7 @@ def resample_and_save(predicted, target_shape, output_file, force_separate_z=Fal
         del_file = deepcopy(predicted)
         predicted = np.load(predicted)
         os.remove(del_file)
-
+        
     predicted_new_shape = resample_data_or_seg(predicted, target_shape, False, order=interpolation_order,
                                                do_separate_z=force_separate_z, order_z=interpolation_order_z)
     seg_new_shape = predicted_new_shape.argmax(0)
@@ -63,28 +63,31 @@ def predict_next_stage(trainer, stage_to_be_predicted_folder):
         print(pat)
         data_file = trainer.dataset_val[pat]['data_file']
         data_preprocessed = np.load(data_file)['data'][:-1]
-
+        data_file_nofolder = data_file.split("\\")[-1] 
+        data_file_nextstage = join(stage_to_be_predicted_folder, data_file_nofolder)
+        output_file = join(output_folder, data_file_nextstage.split("\\")[-1][:-4] + "_segFromPrevStage.npz")
+        if os.path.exists(output_file): continue
         predicted_probabilities = trainer.predict_preprocessed_data_return_seg_and_softmax(
             data_preprocessed, do_mirroring=trainer.data_aug_params["do_mirror"],
             mirror_axes=trainer.data_aug_params['mirror_axes'], mixed_precision=trainer.fp16)[1]
 
-        data_file_nofolder = data_file.split("/")[-1]
-        data_file_nextstage = join(stage_to_be_predicted_folder, data_file_nofolder)
+
         data_nextstage = np.load(data_file_nextstage)['data']
         target_shp = data_nextstage.shape[1:]
-        output_file = join(output_folder, data_file_nextstage.split("/")[-1][:-4] + "_segFromPrevStage.npz")
 
         if np.prod(predicted_probabilities.shape) > (2e9 / 4 * 0.85):  # *0.85 just to be save
             np.save(output_file[:-4] + ".npy", predicted_probabilities)
             predicted_probabilities = output_file[:-4] + ".npy"
+        resample_and_save(predicted_probabilities, target_shp, output_file,force_separate_z,
+                          interpolation_order,interpolation_order_z)
 
-        results.append(export_pool.starmap_async(resample_and_save, [(predicted_probabilities, target_shp, output_file,
-                                                                      force_separate_z, interpolation_order,
-                                                                      interpolation_order_z)]))
+    #     results.append(export_pool.starmap_async(resample_and_save, [(predicted_probabilities, target_shp, output_file,
+    #                                                                   force_separate_z, interpolation_order,
+    #                                                                   interpolation_order_z)]))
 
-    _ = [i.get() for i in results]
-    export_pool.close()
-    export_pool.join()
+    # _ = [i.get() for i in results]
+    # export_pool.close()
+    # export_pool.join()
 
 
 if __name__ == "__main__":
@@ -103,12 +106,11 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    trainerclass = args.network_trainer
-    task = args.task
-    fold = args.fold
-
-    plans_file, folder_with_preprocessed_data, output_folder_name, dataset_directory, batch_dice, stage = \
-        get_default_configuration("3d_lowres", task)
+    trainerclass = args.network_trainer #"nnUNetTrainerV2" #
+    task = args.task #"Task001_KiTS21" #
+    fold = args.fold #[0,1,2,3,4] #
+    plans_file, output_folder_name, dataset_directory, batch_dice, stage, trainer_class = \
+        get_default_configuration("3d_lowres", task,trainerclass)
 
     trainer_class = recursive_find_python_class([join(nnunet.__path__[0], "training", "network_training")],
                                                 trainerclass,
@@ -119,17 +121,18 @@ if __name__ == "__main__":
     else:
         assert issubclass(trainer_class,
                           nnUNetTrainer), "network_trainer was found but is not derived from nnUNetTrainer"
-
-    trainer = trainer_class(plans_file, fold, folder_with_preprocessed_data, output_folder=output_folder_name,
+        
+    # for fold in folds:
+    trainer = trainer_class(plans_file, fold, output_folder=output_folder_name,
                             dataset_directory=dataset_directory, batch_dice=batch_dice, stage=stage)
-
+    
     trainer.initialize(False)
     trainer.load_dataset()
     trainer.do_split()
     trainer.load_best_checkpoint(train=False)
-
-    stage_to_be_predicted_folder = join(dataset_directory, trainer.plans['data_identifier'] + "_stage%d" % 1)
+    
+    stage_to_be_predicted_folder = join(dataset_directory, trainer.plans['data_identifier'] + "_stage%d" % stage+1)
     output_folder = join(pardir(trainer.output_folder), "pred_next_stage")
     maybe_mkdir_p(output_folder)
-
+    
     predict_next_stage(trainer, stage_to_be_predicted_folder)
