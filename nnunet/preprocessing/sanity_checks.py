@@ -199,7 +199,7 @@ def verify_dataset_integrity(folder):
 
         for c in expected_test_identifiers:
             # check if all files are present
-            expected_image_files = [join(folder, "imagesTs", c + "_%04.0d.nii.gz" % i) for i in range(num_modalities)]
+            expected_image_files = [join(folder, "imagesTs", c + "nii.gz" % i) for i in range(num_modalities)]
             assert all([isfile(i) for i in
                         expected_image_files]), "some image files are missing for case %s. Expected files:\n %s" % (
                 c, expected_image_files)
